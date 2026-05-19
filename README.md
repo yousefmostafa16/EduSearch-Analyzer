@@ -23,14 +23,6 @@ EduSearch Analyzer is a full-stack web application that scrapes, analyzes, and v
 
 ---
 
-## 📸 Screenshots
-
-| Dashboard | Visual Analytics | Presentation Mode |
-|-----------|-----------------|-------------------|
-| ![dashboard](docs/screenshots/dashboard.png) | ![plots](docs/screenshots/plots.png) | ![presentation](docs/screenshots/presentation.png) |
-
-> Add your own screenshots in `docs/screenshots/`
-
 ---
 
 ## 🛠️ Tech Stack
