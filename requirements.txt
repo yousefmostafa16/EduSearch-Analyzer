@@ -1,0 +1,15 @@
+flask
+pandas
+numpy
+requests
+beautifulsoup4
+lxml
+selenium
+webdriver-manager
+google-search-results
+networkx
+matplotlib
+openai
+arabic-reshaper
+python-bidi
+python-dotenv
