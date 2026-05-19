@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edu Search | Intelligence Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .num-circ.purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .pres-result-card { background: rgba(15, 23, 42, 0.6); border: 1px solid #1e293b; padding: 30px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; transition: 0.3s;}
+        .pres-result-card i { font-size: 28px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i> Edu Search</div>
+        <div class="nav-title">Analysis Modules</div>
+        <div class="nav-item active" onclick="switchView('dashboard')"><i class="fa-solid fa-satellite-dish"></i> Live Scraping</div>
+        <div class="nav-item" onclick="switchView('plots')"><i class="fa-solid fa-chart-pie"></i> Visual Analytics</div>
+
+        <div class="nav-title" style="margin-top: 20px;">System</div>
+        <div class="nav-item" onclick="switchView('presentation')"><i class="fa-solid fa-desktop"></i> Presentation</div>
+        <div class="nav-item" onclick="switchView('about')"><i class="fa-solid fa-circle-info"></i> About</div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar" id="mainTopbar">
+            <input type="text" id="topic" class="search-input" placeholder="What skill do you want to master today?">
+            <button id="analyzeBtn" class="analyze-btn" onclick="runAnalysis()">Initialize Engine</button>
+
+            <!-- زرار الـ CSV فوق في الشريط يفتح جوجل شيت -->
+            <button class="btn-secondary" style="padding: 16px 20px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; margin: 0;" title="Open Google Sheets" onclick="window.open('https://docs.google.com/spreadsheets/d/1fEUHoZDOEFYfoFVcFt7CqMUS0_FzneulXi8TmmZvhcY/edit?usp=sharing', '_blank')">
+                <i class="fa-solid fa-file-csv" style="color: #10b981; font-size: 18px;"></i> <span style="margin-left: 8px;">CSV Data</span>
+            </button>
+        </div>
+
+        <div id="heroSection" class="hero-section">
+            <div class="hero-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> AI-Powered Course Analytics Platform</div>
+            <h1 class="hero-title">Discover the Best<br><span class="text-gradient">Online Courses</span></h1>
+            <p class="hero-subtitle">Analyze courses from YouTube and Coursera with powerful AI-driven insights. Make data-informed decisions about your learning journey.</p>
+            <div class="hero-buttons">
+                <button class="btn-primary" onclick="document.getElementById('topic').focus()">Start Exploring <i class="fa-solid fa-arrow-right"></i></button>
+                <!-- الزرار هنا رجع تاني يفتح الـ Presentation -->
+                <button class="btn-secondary" onclick="switchView('presentation')">View Presentation</button>
+            </div>
+        </div>
+
+        <!-- Dashboard & Loader -->
+        <div id="consoleBox">
+            <i class="fa-solid fa-mug-hot fa-fade" style="font-size: 40px; margin-bottom: 20px; color: #0ea5e9;"></i>
+            <h3 style="color:#f8fafc;">Processing Data Pipelines...</h3>
+            <p style="color: #94a3b8; margin-top:10px; line-height: 1.6;">Rendering high-fidelity 3D landscapes and KDE heatmaps.<br>Please wait.</p>
+        </div>
+
+        <div id="dashboardView" class="dashboard-area">
+            <div class="roadmap-box" id="roadmapBox" style="display: none;">
+                <h4><i class="fa-solid fa-map-location-dot"></i> Your AI Learning Journey</h4>
+                <div id="roadmapContent"></div>
+            </div>
+            <div class="recommended-section">
+                <div class="section-title"><i class="fa-solid fa-bolt" style="color: #0ea5e9;"></i> AI Top Picks</div>
+                <div class="cards-grid" id="recommendedCards"></div>
+            </div>
+            <div class="section-title">Database Overview</div>
+            <div class="cards-grid" id="allCards"></div>
+        </div>
+
+        <div id="plotsView" class="plots-area">
+            <div class="section-title"><i class="fa-solid fa-chart-line"></i> Advanced Visual Analytics</div>
+            <div class="plots-grid">
+                <div class="plot-card"><h4>Coursera: Top Enrollment Bar</h4><img src="" id="plotBar" class="plot-img"></div>
+                <div class="plot-card"><h4>Coursera: KDE Heatmap</h4><img src="" id="plotHeatmap" class="plot-img"></div>
+                <div class="plot-card"><h4>Coursera: 3D Topography</h4><img src="" id="plot3DC" class="plot-img"></div>
+                <div class="plot-card"><h4>YouTube: Views vs Likes Heatmap</h4><img src="" id="plotYTHeatmap" class="plot-img"></div>
+                <div class="plot-card"><h4>YouTube: Network Centrality</h4><img src="" id="plotNet" class="plot-img"></div>
+                <div class="plot-card"><h4>YouTube: 3D Engagement</h4><img src="" id="plot3DYT" class="plot-img"></div>
+            </div>
+        </div>
+
+        <div id="aboutView" class="about-area">
+            <h2 class="section-title">About EduSearch Analyzer</h2>
+            <p class="section-subtitle" style="margin-bottom: 10px;">Learn about our platform and technology</p>
+            <p class="about-intro">A comprehensive platform for discovering and analyzing online educational courses using advanced data analytics and network analysis techniques.</p>
+
+            <div class="about-card">
+                <h3>What We Do</h3>
+                <div class="grid-2x2">
+                    <div class="feature-item"><h4><i class="fa-solid fa-globe"></i> Data Collection</h4><p>We scrape and collect course data from major educational platforms including YouTube and Coursera.</p></div>
+                    <div class="feature-item"><h4><i class="fa-solid fa-chart-simple"></i> Analytics</h4><p>Our platform processes this data to provide insights through visualizations, statistical analysis, and trend identification.</p></div>
+                    <div class="feature-item"><h4><i class="fa-solid fa-diagram-project"></i> Network Analysis</h4><p>Using graph theory and network analysis, we identify relationships between topics, instructors, and courses.</p></div>
+                    <div class="feature-item"><h4><i class="fa-solid fa-bolt"></i> Smart Search</h4><p>Our intelligent search system allows you to filter and discover courses based on multiple criteria.</p></div>
+                </div>
+            </div>
+
+            <h2 class="section-title"><i class="fa-solid fa-code" style="color:#0ea5e9;"></i> Technologies Used</h2>
+            <div class="tech-grid">
+                <div class="tech-card tc-python"><i class="fa-brands fa-python"></i><h4>Python</h4><p>Core programming language for web scraping and data processing.</p></div>
+                <div class="tech-card tc-selenium"><i class="fa-solid fa-robot"></i><h4>Selenium</h4><p>Browser automation for dynamic content extraction.</p></div>
+                <div class="tech-card tc-bs4"><i class="fa-solid fa-bowl-food"></i><h4>BeautifulSoup</h4><p>HTML parsing and web scraping library.</p></div>
+                <div class="tech-card tc-requests"><i class="fa-solid fa-satellite-dish"></i><h4>Requests</h4><p>HTTP library for API calls and web requests.</p></div>
+                <div class="tech-card tc-networkx"><i class="fa-solid fa-spider"></i><h4>NetworkX</h4><p>Graph analysis and network visualization.</p></div>
+                <div class="tech-card tc-matplotlib"><i class="fa-solid fa-chart-column"></i><h4>Matplotlib</h4><p>Data visualization and plotting library.</p></div>
+                <div class="tech-card tc-numpy"><i class="fa-solid fa-calculator"></i><h4>NumPy</h4><p>Numerical computing and array operations.</p></div>
+            </div>
+        </div>
+
+        <!-- ================= PRESENTATION MODULE ================= -->
+        <div id="presentationView" class="presentation-area">
+            <div class="pres-header">
+                <div class="pres-title"><h2>Project Presentation</h2><p id="slideCounter">Slide 1 of 15</p></div>
+                <div class="pres-controls">
+                    <button id="prevBtn" onclick="prevSlide()" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                    <button id="nextBtn" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide 1 -->
+            <div class="slide active"><div class="slide-content" style="text-align: center;"><div style="border: 1px solid #334155; padding: 8px 20px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; color: #94a3b8; font-size: 14px; margin-bottom: 25px; background: rgba(15,23,42,0.6);"><i class="fa-solid fa-play" style="color: #3b82f6;"></i> Data Analytics Project</div><h1 style="font-size: 72px; font-weight: 800; margin-bottom: 20px; line-height: 1.1;"><span class="text-gradient">EduSearch Analyzer</span></h1><h3 style="font-size: 24px; color: #e2e8f0; font-weight: 500; margin-bottom: 15px;">AI-Powered Educational Data Acquisition and Analytics Platform</h3><p style="color: #94a3b8; font-size: 18px;">Transforming Online Learning Through Data Intelligence</p></div></div>
+            <!-- Slide 2 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Problem Statement</h1><div class="pres-list"><div class="pres-item"><div class="num-circ red">1</div> Massive volume of online courses available across multiple platforms</div><div class="pres-item"><div class="num-circ red">2</div> Difficult to compare course quality and engagement metrics</div><div class="pres-item"><div class="num-circ red">3</div> No centralized analytics for cross-platform course analysis</div><div class="pres-item"><div class="num-circ red">4</div> Limited insights into course relationships and trending topics</div></div></div></div>
+            <!-- Slide 3 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Project Objectives</h1><div class="pres-list"><div class="pres-item"><div class="num-circ blue">1</div> Automate multi-platform course data acquisition from YouTube and Coursera</div><div class="pres-item"><div class="num-circ blue">2</div> Build intelligent course recommendation system based on analytics</div><div class="pres-item"><div class="num-circ blue">3</div> Visualize course relationships through network analysis</div><div class="pres-item"><div class="num-circ blue">4</div> Provide interactive dashboard for data-driven learning decisions</div></div></div></div>
+            <!-- Slide 4 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading">System Workflow</h1><div class="pres-flow-item"><i class="fa-solid fa-user c-blue flow-icon"></i> <span class="c-blue">User Input</span></div><div class="flow-line"></div><div class="pres-flow-item"><i class="fa-solid fa-globe c-purple flow-icon"></i> <span class="c-purple">Web Scraping / CSV Extraction</span></div><div class="flow-line"></div><div class="pres-flow-item"><i class="fa-solid fa-broom c-orange flow-icon"></i> <span class="c-orange">Data Cleaning</span></div><div class="flow-line"></div><div class="pres-flow-item"><i class="fa-solid fa-chart-pie c-teal flow-icon"></i> <span class="c-teal">Data Analysis</span></div></div></div>
+            <!-- Slide 5 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading">System Workflow</h1><div class="pres-flow-item"><i class="fa-solid fa-chart-pie c-teal flow-icon"></i> <span class="c-teal">Data Analysis</span></div><div class="flow-line"></div><div class="pres-flow-item"><i class="fa-solid fa-chart-line" style="color: #eab308;" class="flow-icon"></i> <span style="color: #eab308;">Visualization</span></div><div class="flow-line"></div><div class="pres-flow-item"><i class="fa-solid fa-bullseye" style="color: #ec4899;" class="flow-icon"></i> <span style="color: #ec4899;">Recommendation</span></div><div class="flow-line"></div><div class="pres-flow-item"><i class="fa-solid fa-laptop" style="color: #06b6d4;" class="flow-icon"></i> <span style="color: #06b6d4;">Dashboard Output</span></div></div></div>
+            <!-- Slide 6 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Data Acquisition Process</h1><div class="pres-grid"><div class="pres-card"><div class="pres-card-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;"><i class="fa-solid fa-globe"></i></div><h3>1. Web Scraping</h3><p>Automated data collection using Selenium and BeautifulSoup</p></div><div class="pres-card"><div class="pres-card-icon" style="background: rgba(249, 115, 22, 0.2); color: #f97316;"><i class="fa-solid fa-bolt"></i></div><h3>2. API Integration</h3><p>SerpAPI for enhanced search results and metadata</p></div><div class="pres-card"><div class="pres-card-icon" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;"><i class="fa-solid fa-database"></i></div><h3>3. Data Cleaning</h3><p>Pandas-based data normalization and validation</p></div><div class="pres-card"><div class="pres-card-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;"><i class="fa-solid fa-file-csv"></i></div><h3>4. Storage / Export</h3><p>CSV export for offline analysis and dashboard integration</p></div></div></div></div>
+            <!-- Slide 7 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Technologies Used</h1><div class="pres-grid"><div class="pres-card"><div class="pres-card-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;"><i class="fa-solid fa-globe"></i></div><h3>Data Acquisition</h3><div class="pres-tags"><span class="pres-tag">Python</span><span class="pres-tag">Selenium</span><span class="pres-tag">BeautifulSoup</span></div></div><div class="pres-card"><div class="pres-card-icon" style="background: rgba(249, 115, 22, 0.2); color: #f97316;"><i class="fa-solid fa-database"></i></div><h3>Data Processing</h3><div class="pres-tags"><span class="pres-tag">Pandas</span><span class="pres-tag">NumPy</span></div></div><div class="pres-card"><div class="pres-card-icon" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;"><i class="fa-solid fa-chart-simple"></i></div><h3>Analysis & Visualization</h3><div class="pres-tags"><span class="pres-tag">NetworkX</span><span class="pres-tag">Matplotlib</span></div></div><div class="pres-card"><div class="pres-card-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;"><i class="fa-solid fa-code"></i></div><h3>Web Interface</h3><div class="pres-tags"><span class="pres-tag">Flask</span><span class="pres-tag">HTML/CSS</span><span class="pres-tag">JavaScript</span></div></div></div></div></div>
+            <!-- Slide 8 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Course Recommendation System</h1><div class="pres-list"><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Rating-based filtering to extract top-tier courses</div><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Engagement metrics analysis (views, likes, enrollments)</div><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Topic relevance scoring using AI algorithms</div><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Cross-platform comparison matrices</div></div></div></div>
+            <!-- Slide 9 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Heatmap Visualization</h1><p class="slide-sub">Platform-wise course distribution analysis across categories</p><div style="background: rgba(15,23,42,0.6); border: 1px solid #1e293b; padding: 30px; border-radius: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;"><div style="height: 60px; background: rgba(59,130,246,0.8); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.9); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.7); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.3); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.2); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.7); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,1.0); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.6); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.4); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.3); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.5); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.8); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.9); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.5); border-radius: 8px;"></div><div style="height: 60px; background: rgba(59,130,246,0.1); border-radius: 8px;"></div></div></div></div>
+            <!-- Slide 10 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">3D Scatter Plot Analysis</h1><p class="slide-sub">Multi-dimensional visualization of views, ratings, and engagement</p><div style="background: rgba(15,23,42,0.6); border: 1px solid #1e293b; height: 350px; border-radius: 16px; position: relative;"><div style="position:absolute; top:40%; left:30%; width:15px; height:15px; background:#f97316; border-radius:50%;"></div><div style="position:absolute; top:30%; left:45%; width:10px; height:10px; background:#f97316; border-radius:50%;"></div><div style="position:absolute; top:60%; left:35%; width:20px; height:20px; background:#f97316; border-radius:50%;"></div><div style="position:absolute; top:50%; left:55%; width:18px; height:18px; background:#f97316; border-radius:50%;"></div><div style="position:absolute; top:25%; left:35%; width:14px; height:14px; background:#3b82f6; border-radius:50%;"></div><div style="position:absolute; top:70%; left:30%; width:12px; height:12px; background:#3b82f6; border-radius:50%;"></div><div style="position:absolute; top:65%; left:60%; width:22px; height:22px; background:#3b82f6; border-radius:50%;"></div><div style="position:absolute; top:45%; left:70%; width:16px; height:16px; background:#3b82f6; border-radius:50%;"></div></div></div></div>
+            <!-- Slide 11 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Network Graph Analysis</h1><p class="slide-sub">Topic relationships and course connections using NetworkX</p><div class="pres-grid"><div style="background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 16px; display: flex; align-items: center; justify-content: center; height: 320px;"><svg width="200" height="200" viewBox="0 0 200 200"><line x1="50" y1="50" x2="100" y2="100" stroke="#3b82f6" stroke-width="2"/><line x1="150" y1="50" x2="100" y2="100" stroke="#3b82f6" stroke-width="2"/><line x1="50" y1="150" x2="100" y2="100" stroke="#f97316" stroke-width="2"/><line x1="150" y1="150" x2="100" y2="100" stroke="#f97316" stroke-width="2"/><circle cx="100" cy="100" r="12" fill="#3b82f6"/><circle cx="50" cy="50" r="10" fill="#f97316"/><circle cx="150" cy="50" r="10" fill="#f97316"/><circle cx="50" cy="150" r="10" fill="#a855f7"/><circle cx="150" cy="150" r="10" fill="#a855f7"/></svg></div><div class="pres-list" style="justify-content: center;"><div class="pres-item" style="padding: 15px 25px;">Degree Centrality</div><div class="pres-item" style="padding: 15px 25px;">Betweenness Centrality</div><div class="pres-item" style="padding: 15px 25px;">Closeness Centrality</div><div class="pres-item" style="padding: 15px 25px;">PageRank Algorithm</div></div></div></div></div>
+            <!-- Slide 12 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Website Dashboard UI</h1><div class="pres-grid"><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Real-time analytics dashboard</div><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Interactive search and filtering</div><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Live Data plotting functionality</div><div class="pres-item"><div class="num-circ check"><i class="fa-solid fa-check"></i></div> Responsive design</div></div></div></div>
+            <!-- Slide 13 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Results and Insights</h1><div class="pres-grid"><div class="pres-result-card"><i class="fa-solid fa-chart-column" style="color: #60a5fa;"></i><p style="color: #f8fafc; font-size: 16px;">Extensive live course datasets dynamically analyzed across multiple platforms.</p></div><div class="pres-result-card"><i class="fa-solid fa-star" style="color: #fbbf24;"></i><p style="color: #f8fafc; font-size: 16px;">Consistently high average ratings observed for the top AI-recommended courses.</p></div><div class="pres-result-card"><i class="fa-solid fa-bullseye" style="color: #ec4899;"></i><p style="color: #f8fafc; font-size: 16px;">Trending technology courses consistently demonstrate the highest user engagement.</p></div><div class="pres-result-card"><i class="fa-solid fa-link" style="color: #a855f7;"></i><p style="color: #f8fafc; font-size: 16px;">Network analysis successfully reveals distinct and inter-connected topic clusters.</p></div></div></div></div>
+            <!-- Slide 14 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading left">Future Improvements</h1><div class="pres-list"><div class="pres-item"><div class="num-circ purple">1</div> Expand data scraping to additional platforms (Udemy, edX, Khan Academy)</div><div class="pres-item"><div class="num-circ purple">2</div> Implement machine learning for personalized user-specific recommendations</div><div class="pres-item"><div class="num-circ purple">3</div> Add real-time course price tracking and discount notifications</div><div class="pres-item"><div class="num-circ purple">4</div> Develop a dedicated mobile application for on-the-go analysis</div><div class="pres-item"><div class="num-circ purple">5</div> Integrate NLP sentiment analysis extracted directly from course reviews</div></div></div></div>
+            <!-- Slide 15 -->
+            <div class="slide"><div class="slide-content"><h1 class="slide-heading">Conclusion</h1><div class="pres-conclusion" style="margin-bottom: 20px;">EduSearch Analyzer successfully demonstrates the power of data-driven decision making in online education. Through automated acquisition, intelligent analysis, and interactive visualization, we've created a comprehensive platform that empowers learners to make informed choices.</div><div class="pres-thanks">Thank You</div></div></div>
+
+            <div class="pres-dots" id="dotsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // ================= SCRAPING LOGIC =================
+        async function runAnalysis() {
+            const topic = document.getElementById("topic").value;
+            if (!topic) return;
+
+            document.getElementById("analyzeBtn").disabled = true;
+            document.getElementById("dashboardView").style.display = "none";
+            document.getElementById("plotsView").style.display = "none";
+            document.getElementById("aboutView").style.display = "none";
+            document.getElementById("heroSection").style.display = "none";
+            document.getElementById("presentationView").style.display = "none";
+            document.getElementById("consoleBox").style.display = "block";
+
+            try {
+                const response = await fetch('/run_scraper', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topic })
+                });
+                const data = await response.json();
+                renderData(data);
+            } catch (error) {
+                document.getElementById("consoleBox").innerHTML = "<h3 style='color:red;'>System Error.</h3>";
+            } finally {
+                document.getElementById("analyzeBtn").disabled = false;
+            }
+        }
+
+        function renderData(data) {
+            if (data.status === "success") {
+                document.getElementById("consoleBox").style.display = "none";
+                document.getElementById("roadmapBox").style.display = "block";
+                document.getElementById("roadmapContent").innerHTML = data.roadmap;
+
+                let recHTML = "";
+                data.recommended.forEach(c => recHTML += createCard(c, "purple", "ALGORITHM PICK"));
+                document.getElementById("recommendedCards").innerHTML = recHTML;
+
+                let allHTML = "";
+                data.all_courses.forEach(c => allHTML += createCard(c, "green", "VERIFIED"));
+                document.getElementById("allCards").innerHTML = allHTML;
+
+                const ts = new Date().getTime();
+                document.getElementById("plotBar").src = `/static/plots/bar.png?t=${ts}`;
+                document.getElementById("plotHeatmap").src = `/static/plots/heatmap.png?t=${ts}`;
+                document.getElementById("plot3DC").src = `/static/plots/3d_coursera.png?t=${ts}`;
+                document.getElementById("plotYTHeatmap").src = `/static/plots/youtube_heatmap.png?t=${ts}`;
+                document.getElementById("plotNet").src = `/static/plots/network.png?t=${ts}`;
+                document.getElementById("plot3DYT").src = `/static/plots/3d_youtube.png?t=${ts}`;
+
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                document.getElementById("dashboardView").style.display = "block";
+            } else {
+                 document.getElementById("consoleBox").innerHTML = `<h3 style='color:red;'>${data.message}</h3>`;
+            }
+        }
+
+        function createCard(course, tagClass, tagText) {
+            let platClass = course.platform.toLowerCase();
+            let likesHtml = course.likes !== "N/A" ? `<span class="likes"><i class="fa-solid fa-thumbs-up"></i> ${course.likes}</span>` : "";
+            return `
+                <div class="course-card">
+                    <div class="top-tag ${tagClass}">${tagText}</div>
+                    <div>
+                        <div class="card-header"><span class="platform-badge ${platClass}">${course.platform}</span><span style="color:#10b981; font-weight:bold;">${course.price}</span></div>
+                        <div class="course-title">${course.title}</div>
+                        <div class="instructor"><i class="fa-solid fa-chalkboard-user"></i> ${course.instructor}</div>
+                        <details class="course-summary"><summary><i class="fa-solid fa-wand-magic-sparkles"></i> Show AI Insights</summary><div class="summary-content">${course.summary}</div></details>
+                    </div>
+                    <div class="card-footer">
+                        <div class="rating-views"><span class="star"><i class="fa-solid fa-star"></i> ${course.rating}</span><span class="views"><i class="fa-solid fa-eye"></i> ${course.metrics}</span>${likesHtml}</div>
+                        <a href="${course.link}" target="_blank" class="link-btn"><i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </div>`;
+        }
+
+        // ================= PRESENTATION SLIDER LOGIC =================
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const dotsContainer = document.getElementById('dotsContainer');
+
+        for(let i=0; i<totalSlides; i++) {
+            let dot = document.createElement('div');
+            dot.className = i === 0 ? 'dot active' : 'dot';
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+        const dots = document.querySelectorAll('.dot');
+
+        function updateSlider() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+            document.getElementById('slideCounter').innerText = `Slide ${currentSlide + 1} of ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { if(currentSlide < totalSlides - 1) { currentSlide++; updateSlider(); } }
+        function prevSlide() { if(currentSlide > 0) { currentSlide--; updateSlider(); } }
+        function goToSlide(n) { currentSlide = n; updateSlider(); }
+
+        // ================= NAVIGATION LOGIC =================
+        function switchView(viewId) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('plotsView').style.display = 'none';
+            document.getElementById('aboutView').style.display = 'none';
+            document.getElementById('heroSection').style.display = 'none';
+            document.getElementById('presentationView').style.display = 'none';
+            document.getElementById('consoleBox').style.display = 'none';
+
+            document.getElementById('mainTopbar').style.display = viewId === 'presentation' ? 'none' : 'flex';
+
+            if(viewId === 'dashboard') {
+                if (document.getElementById('recommendedCards').innerHTML === '') document.getElementById('heroSection').style.display = 'flex';
+                else document.getElementById('dashboardView').style.display = 'block';
+            } else if (viewId === 'plots') document.getElementById('plotsView').style.display = 'block';
+            else if (viewId === 'about') document.getElementById('aboutView').style.display = 'block';
+            else if (viewId === 'presentation') {
+                document.getElementById('presentationView').style.display = 'block';
+                currentSlide = 0; updateSlider();
+            }
+        }
+    </script>
+</body>
+</html>
