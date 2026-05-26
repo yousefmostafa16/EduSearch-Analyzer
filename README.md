@@ -77,10 +77,10 @@ OPENROUTER_API_KEY=your_openrouter_key_here
 ### Run
 
 ```bash
-python app.py
+Currently it's Live Demo
 ```
 
-Open [http://localhost:5000](http://localhost:5000) in your browser.
+Open (https://huggingface.co/spaces/yousefmostafa16/EduSearch) in your browser.
 
 ---
 
